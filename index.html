@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mantiqiy amallar - 8-sinf</title>
+
+<!--
+  =========================================================================
+  SUPABASE UCHUN TAYYOR SQL (SQL Editor'ga nusxalab, "Run" tugmasini bosing)
+  =========================================================================
+
+  -- 1) Natijalar jadvalini yaratamiz
+  create table if not exists natijalar (
+    id uuid primary key default gen_random_uuid(),
+    created_at timestamp with time zone default now(),
+    ism text not null,
+    ball integer not null,
+    jami integer not null
+  );
+
+  -- 2) Jadval uchun Row Level Security (RLS) ni yoqamiz
+  alter table natijalar enable row level security;
+
+  -- 3) anon (ochiq, kalitsiz) rolga YOZISH (insert) huquqini beramiz
+  create policy "Anon insert uchun ruxsat"
+    on natijalar
+    for insert
+    to anon
+    with check (true);
+
+  -- 4) anon rolga O'QISH (select) huquqini beramiz
+  create policy "Anon select uchun ruxsat"
+    on natijalar
+    for select
+    to anon
+    using (true);
+
+  =========================================================================
+-->
+
+<style>
+  /* ============================================================
+     1-QADAM: UMUMIY KO'RINISH (CSS)
+     Bu yerda butun sahifaning rangi, shrifti va o'lchami belgilanadi.
+     Shrift kattaroq qilib tanlandi, chunki dars kompyuter ekranida
+     ko'rsatiladi va hamma o'quvchiga qulay bo'lishi kerak.
+     ============================================================ */
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: Arial, "Segoe UI", sans-serif;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-size: 20px;
+    line-height: 1.6;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 20px 25px 60px 25px;
+  }
+
+  h1 {
+    font-size: 42px;
+    color: #1e3a8a;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+  .kirish {
+    text-align: center;
+    font-size: 22px;
+    color: #444;
+    margin-bottom: 30px;
+  }
+
+  h2 {
+    font-size: 30px;
+    color: #ffffff;
+    background: #1e3a8a;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-top: 45px;
+  }
+
+  .tarif-katak {
+    background: #fff7cc;
+    border: 3px solid #f5c400;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 18px 0;
+    font-size: 23px;
+  }
+
+  .belgi {
+    font-size: 26px;
+    font-weight: bold;
+    color: #1e3a8a;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0 25px 0;
+    font-size: 23px;
+  }
+
+  th, td {
+    border: 2px solid #1e3a8a;
+    padding: 12px;
+    text-align: center;
+  }
+
+  th {
+    background: #1e3a8a;
+    color: #ffffff;
+  }
+
+  tr:nth-child(even) td {
+    background: #eef4ff;
+  }
+
+  .misol {
+    font-style: italic;
+    color: #333;
+    font-size: 21px;
+  }
+
+  /* Test (quiz) savollari uchun katak */
+  .savol-katak {
+    background: #eef4ff;
+    border: 2px solid #1e3a8a;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 18px 0;
+    font-size: 22px;
+  }
+
+  .savol-katak label {
+    display: block;
+    margin: 10px 0;
+    font-size: 21px;
+    cursor: pointer;
+  }
+
+  input[type="text"] {
+    font-size: 22px;
+    padding: 10px;
+    width: 100%;
+    max-width: 420px;
+    border: 2px solid #1e3a8a;
+    border-radius: 8px;
+    margin-top: 8px;
+  }
+
+  button {
+    font-size: 24px;
+    padding: 14px 28px;
+    background: #1e3a8a;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 18px;
+    display: block;
+  }
+
+  button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  #natija-xabar {
+    font-size: 25px;
+    font-weight: bold;
+    margin-top: 18px;
+    color: #065f46;
+  }
+
+  #xato-xabar {
+    font-size: 21px;
+    font-weight: bold;
+    color: #b91c1c;
+    margin-top: 12px;
+  }
+
+  .natija-qutisi {
+    background: #f3f4f6;
+    border: 1px solid #9ca3af;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 21px;
+  }
+
+  #natijalar-royxati-bosh {
+    font-size: 22px;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+
+  <h1>MANTIQIY AMALLAR</h1>
+  <p class="kirish">8-sinf &mdash; Konyunksiya, Implikatsiya, Ekvivalentlik</p>
+
+  <!-- ============================================================
+       2-QADAM: KONYUNKSIYA (VA amali)
+       ============================================================ -->
+  <h2>1. KONYUNKSIYA ( A &and; B ) &mdash; "VA" AMALI</h2>
+
+  <div class="tarif-katak">
+    <b>TA'RIF:</b> Ikki fikr (A va B) <u>bir vaqtda</u> to'g'ri bo'lsagina,
+    ularning konyunksiyasi ham to'g'ri bo'ladi. Aks holda &mdash; noto'g'ri.<br><br>
+    <span class="belgi">Belgisi: A &and; B</span> (o'qiladi: "A va B")
+  </div>
+
+  <p class="misol">Misol: A = "Bugun dushanba", B = "Ertaga seshanba". <br>
+  A &and; B = "Bugun dushanba VA ertaga seshanba"</p>
+
+  <table>
+    <tr><th>A</th><th>B</th><th>A &and; B</th></tr>
+    <tr><td>To'g'ri</td><td>To'g'ri</td><td><b>To'g'ri</b></td></tr>
+    <tr><td>To'g'ri</td><td>Noto'g'ri</td><td>Noto'g'ri</td></tr>
+    <tr><td>Noto'g'ri</td><td>To'g'ri</td><td>Noto'g'ri</td></tr>
+    <tr><td>Noto'g'ri</td><td>Noto'g'ri</td><td>Noto'g'ri</td></tr>
+  </table>
+
+  <!-- ============================================================
+       3-QADAM: IMPLIKATSIYA (Agar...bo'lsa amali)
+       ============================================================ -->
+  <h2>2. IMPLIKATSIYA ( A &rarr; B ) &mdash; "AGAR...BO'LSA" AMALI</h2>
+
+  <div class="tarif-katak">
+    <b>TA'RIF:</b> "Agar A bo'lsa, B bo'ladi". Implikatsiya <u>faqat</u>
+    A to'g'ri va B noto'g'ri bo'lgandagina noto'g'ri bo'ladi.
+    Qolgan barcha holatlarda to'g'ri hisoblanadi!<br><br>
+    <span class="belgi">Belgisi: A &rarr; B</span> (o'qiladi: "agar A bo'lsa, B bo'ladi")
+  </div>
+
+  <p class="misol">Misol: A = "Yomg'ir yog'adi", B = "Yer ho'l bo'ladi". <br>
+  A &rarr; B = "Agar yomg'ir yog'sa, yer ho'l bo'ladi"</p>
+
+  <table>
+    <tr><th>A</th><th>B</th><th>A &rarr; B</th></tr>
+    <tr><td>To'g'ri</td><td>To'g'ri</td><td><b>To'g'ri</b></td></tr>
+    <tr><td>To'g'ri</td><td>Noto'g'ri</td><td><b>Noto'g'ri</b></td></tr>
+    <tr><td>Noto'g'ri</td><td>To'g'ri</td><td>To'g'ri</td></tr>
+    <tr><td>Noto'g'ri</td><td>Noto'g'ri</td><td>To'g'ri</td></tr>
+  </table>
+
+  <!-- ============================================================
+       4-QADAM: EKVIVALENTLIK (Agar va faqat agar amali)
+       ============================================================ -->
+  <h2>3. EKVIVALENTLIK ( A &harr; B ) &mdash; "AGAR VA FAQAT AGAR" AMALI</h2>
+
+  <div class="tarif-katak">
+    <b>TA'RIF:</b> A va B bir xil qiymatga ega bo'lgandagina (ikkisi ham
+    to'g'ri YOKI ikkisi ham noto'g'ri) ekvivalentlik to'g'ri bo'ladi.<br><br>
+    <span class="belgi">Belgisi: A &harr; B</span> (o'qiladi: "A agar va faqat agar B")
+  </div>
+
+  <p class="misol">Misol: A = "Son 4 ga qoldiqsiz bo'linadi", B = "Son juft son". <br>
+  A &harr; B = "Son 4 ga bo'linadi, agar va faqat agar son juft bo'lsa" (bu misolda hamisha to'g'ri emas, shuning uchun mantiqan tekshiramiz)</p>
+
+  <table>
+    <tr><th>A</th><th>B</th><th>A &harr; B</th></tr>
+    <tr><td>To'g'ri</td><td>To'g'ri</td><td><b>To'g'ri</b></td></tr>
+    <tr><td>To'g'ri</td><td>Noto'g'ri</td><td>Noto'g'ri</td></tr>
+    <tr><td>Noto'g'ri</td><td>To'g'ri</td><td>Noto'g'ri</td></tr>
+    <tr><td>Noto'g'ri</td><td>Noto'g'ri</td><td><b>To'g'ri</b></td></tr>
+  </table>
+
+  <!-- ============================================================
+       5-QADAM: BILIMNI TEKSHIRISH TESTI
+       Har bir savolda A va B berilgan, o'quvchi natijani tanlaydi.
+       ============================================================ -->
+  <h2>BILIMINGIZNI TEKSHIRING!</h2>
+
+  <div class="savol-katak">
+    <b>1-savol:</b> A = "2+2=4" (to'g'ri), B = "5 &mdash; toq son" (to'g'ri).<br>
+    A &and; B nimaga teng?
+    <label><input type="radio" name="q1" value="true"> To'g'ri</label>
+    <label><input type="radio" name="q1" value="false"> Noto'g'ri</label>
+  </div>
+
+  <div class="savol-katak">
+    <b>2-savol:</b> A = "Osmon yashil rangda" (noto'g'ri), B = "Suv ho'l qiladi" (to'g'ri).<br>
+    A &rarr; B nimaga teng?
+    <label><input type="radio" name="q2" value="true"> To'g'ri</label>
+    <label><input type="radio" name="q2" value="false"> Noto'g'ri</label>
+  </div>
+
+  <div class="savol-katak">
+    <b>3-savol:</b> A = "3 &mdash; juft son" (noto'g'ri), B = "4 &mdash; juft son" (to'g'ri).<br>
+    A &harr; B nimaga teng?
+    <label><input type="radio" name="q3" value="true"> To'g'ri</label>
+    <label><input type="radio" name="q3" value="false"> Noto'g'ri</label>
+  </div>
+
+  <div class="savol-katak">
+    <b>4-savol:</b> A = "Bugun dushanba" (to'g'ri), B = "Ertaga seshanba" (to'g'ri).<br>
+    A &and; B nimaga teng?
+    <label><input type="radio" name="q4" value="true"> To'g'ri</label>
+    <label><input type="radio" name="q4" value="false"> Noto'g'ri</label>
+  </div>
+
+  <div class="savol-katak">
+    <b>5-savol:</b> A = "Baliq ucha oladi" (noto'g'ri), B = "Qush suza oladi" (noto'g'ri).<br>
+    A &rarr; B nimaga teng?
+    <label><input type="radio" name="q5" value="true"> To'g'ri</label>
+    <label><input type="radio" name="q5" value="false"> Noto'g'ri</label>
+  </div>
+
+  <!-- ============================================================
+       6-QADAM: ISM VA YUBORISH TUGMASI
+       ============================================================ -->
+  <div class="savol-katak">
+    <b>Ismingizni kiriting:</b><br>
+    <input type="text" id="ism" placeholder="Masalan: Aziz Aliyev">
+  </div>
+
+  <button id="yuborish-tugmasi">Natijani yuborish</button>
+
+  <p id="natija-xabar"></p>
+  <p id="xato-xabar"></p>
+
+  <!-- ============================================================
+       7-QADAM: AVVALGI NATIJALAR RO'YXATI
+       ============================================================ -->
+  <h2>SINFDOSHLAR NATIJALARI</h2>
+  <p id="natijalar-royxati-bosh">Yuklanmoqda...</p>
+  <div id="natijalar-royxati"></div>
+
+  <!-- ============================================================
+       8-QADAM: SUPABASE BILAN ULANISH (JavaScript)
+       ============================================================ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // --- Bu ikki qatorga O'Z Supabase loyihangizning qiymatlarini yozing ---
+    const SUPABASE_URL = "https://SIZNING-LOYIHANGIZ.supabase.co"; // <-- bu yerga o'z qiymatlaringizni qo'ying
+    const SUPABASE_ANON_KEY = "SIZNING_ANON_KALITINGIZ"; // <-- bu yerga o'z qiymatlaringizni qo'ying
+
+    // Supabase mijoz (client) obyektini yaratamiz
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // To'g'ri javoblar kaliti (har bir savol uchun kutilgan qiymat)
+    const togriJavoblar = {
+      q1: "true",
+      q2: "true",
+      q3: "false",
+      q4: "true",
+      q5: "true"
+    };
+    const JAMI_SAVOL = Object.keys(togriJavoblar).length;
+
+    // Element'larni oldindan topib olamiz
+    const ismInput = document.getElementById("ism");
+    const tugma = document.getElementById("yuborish-tugmasi");
+    const natijaXabar = document.getElementById("natija-xabar");
+    const xatoXabar = document.getElementById("xato-xabar");
+    const royxatKonteyner = document.getElementById("natijalar-royxati");
+    const royxatBosh = document.getElementById("natijalar-royxati-bosh");
+
+    // Tarmoq juda sekin bo'lsa dastur "qotib qolmasin" uchun yordamchi funksiya:
+    // belgilangan vaqt (ms) ichida javob kelmasa, xatolik qaytaradi.
+    function vaqtChegarasiBilan(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Server javob bermadi. Internetni tekshiring.")), ms)
+        )
+      ]);
+    }
+
+    // Xabar oynalarini tozalash
+    function xabarlarniTozala() {
+      natijaXabar.textContent = "";
+      xatoXabar.textContent = "";
+    }
+
+    // ------------------------------------------------------------
+    // Mavjud natijalarni Supabase'dan o'qib, ro'yxatda ko'rsatish
+    // ------------------------------------------------------------
+    async function natijalarniYukla() {
+      try {
+        royxatBosh.textContent = "Yuklanmoqda...";
+        const { data, error } = await vaqtChegarasiBilan(
+          supabase
+            .from("natijalar")
+            .select("*")
+            .order("created_at", { ascending: false }),
+          10000
+        );
+
+        if (error) throw error;
+
+        royxatKonteyner.innerHTML = "";
+
+        if (!data || data.length === 0) {
+          royxatBosh.textContent = "Hozircha yozuv yo'q";
+          return;
+        }
+
+        royxatBosh.textContent = "";
+        data.forEach((item) => {
+          const qutik = document.createElement("div");
+          qutik.className = "natija-qutisi";
+          qutik.textContent = item.ism + " — " + item.ball + " / " + item.jami + " ball";
+          royxatKonteyner.appendChild(qutik);
+        });
+      } catch (err) {
+        royxatBosh.textContent = "";
+        xatoXabar.textContent = "Xatolik: " + err.message;
+      }
+    }
+
+    // ------------------------------------------------------------
+    // "Natijani yuborish" tugmasi bosilganda ishlaydigan funksiya
+    // ------------------------------------------------------------
+    tugma.addEventListener("click", async () => {
+      xabarlarniTozala();
+
+      // 1) Ism bo'sh emasligini tekshiramiz
+      const ism = ismInput.value.trim();
+      if (!ism) {
+        xatoXabar.textContent = "Iltimos, ismingizni kiriting!";
+        return;
+      }
+
+      // 2) Barcha savollarga javob berilganini tekshiramiz
+      for (let i = 1; i <= JAMI_SAVOL; i++) {
+        const tanlangan = document.querySelector('input[name="q' + i + '"]:checked');
+        if (!tanlangan) {
+          xatoXabar.textContent = "Iltimos, barcha savollarga javob bering! (" + i + "-savol javobsiz)";
+          return;
+        }
+      }
+
+      // 3) Ballni hisoblaymiz
+      let ball = 0;
+      for (let i = 1; i <= JAMI_SAVOL; i++) {
+        const tanlangan = document.querySelector('input[name="q' + i + '"]:checked').value;
+        if (tanlangan === togriJavoblar["q" + i]) {
+          ball++;
+        }
+      }
+
+      // 4) Tugmani vaqtincha o'chiramiz va matnini o'zgartiramiz
+      tugma.disabled = true;
+      tugma.textContent = "Yuborilmoqda...";
+
+      try {
+        const { error } = await vaqtChegarasiBilan(
+          supabase.from("natijalar").insert([
+            { ism: ism, ball: ball, jami: JAMI_SAVOL }
+          ]),
+          10000
+        );
+
+        if (error) throw error;
+
+        natijaXabar.textContent =
+          "Rahmat, " + ism + "! Sizning natijangiz: " + ball + " / " + JAMI_SAVOL + " ball. Natija muvaffaqiyatli yuborildi!";
+
+        // Ro'yxatni yangilaymiz, yangi natija ko'rinishi uchun
+        await natijalarniYukla();
+      } catch (err) {
+        xatoXabar.textContent = "Xatolik yuz berdi: " + err.message;
+      } finally {
+        // 5) Tugmani qayta yoqamiz
+        tugma.disabled = false;
+        tugma.textContent = "Natijani yuborish";
+      }
+    });
+
+    // ------------------------------------------------------------
+    // Sahifa ochilganda mavjud natijalarni avtomatik yuklaymiz
+    // ------------------------------------------------------------
+    window.addEventListener("DOMContentLoaded", natijalarniYukla);
+  </script>
+
+</body>
+</html>
